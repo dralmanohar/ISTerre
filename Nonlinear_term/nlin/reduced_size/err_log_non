@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/nfs_scratch/sharmam/Nonlinear_term/code/nlin/reduced_size/time_series_non_lin.py", line 12, in <module>
+    from nonlinear_F_AA_AB import*
+  File "/nfs_scratch/sharmam/Nonlinear_term/code/nlin/reduced_size/nonlinear_F_AA_AB.py", line 201
+    save_npy_scalar_two(FUT, TFUT,'{0:}/overline_tilde_UT{1:}'.format{save_path, time_stamp})
+                                                                     ^
+SyntaxError: invalid syntax

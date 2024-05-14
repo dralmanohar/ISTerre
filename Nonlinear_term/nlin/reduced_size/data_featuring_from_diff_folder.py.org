@@ -1,0 +1,171 @@
+import numpy as np
+import os
+import h5py
+
+from read_write import*
+import glob
+######### filenames
+
+def make_direcotry(path, com):
+	MYDIR = ("{0:}/{1:}".format(path, com))
+	CHECK_FOLDER = os.path.isdir(MYDIR)
+	
+	if not CHECK_FOLDER:
+		os.makedirs(MYDIR)
+		print("created folder : ", MYDIR)
+	else:
+		print(MYDIR, "folder already exists.")
+	
+	return MYDIR
+
+def load_numpy(filename):
+	
+	filename = filename
+	
+	data = np.load(filename, allow_pickle=True)
+	
+	r     = data.item().get('r')
+	theta = data.item().get('theta')
+	phi   = data.item().get('phi')
+	Ur 	  = data.item().get('ur')
+	Ut 	  = data.item().get('ut')
+	Up 	  = data.item().get('up')
+	Br 	  = data.item().get('br')
+	Bt 	  = data.item().get('bt')
+	Bp 	  = data.item().get('bp')
+	
+	return r, theta, phi, Ur, Ut, Up, Br, Bt, Bp
+
+
+def load_numpy_scalar(filename):
+	
+	filename = filename 
+	
+	data = np.load(filename, allow_pickle=True)
+	
+	r         = data.item().get('r')
+	theta     = data.item().get('theta')
+	phi       = data.item().get('phi')
+	Tr  	  = data.item().get('Tr')
+	Ttrr 	  = data.item().get('Trr')
+	deri   	  = data.item().get('deri')
+	
+	return r, theta, phi, Tr, Ttrr, deri
+
+def data_generator_frame(path):
+	my_list = sorted(os.listdir(data_path))
+	sample = 0
+	
+	n = 256
+	
+	number_field = len(my_list)*n
+	
+	train = int(number_field*0.80) 
+	test  = int(number_field*0.18) 
+	val   = int(number_field*0.02) 
+	print ("train = \t",train)		
+
+	
+	for folder in (my_list):
+		path = data_path + folder
+		
+		########### field files load
+		
+		file_name1 = path + '/' + 'UB_trunc_%s.npy'%(folder)
+		file_name2 = path + '/' + 'TTr_%s.npy'%(folder)
+		
+		##### derivative files load
+		
+		file_name3 = path + '/' + 'TDVF_grad_%s.npy'%(folder)
+		file_name4 = path + '/' + 'TDBF_grad_%s.npy'%(folder)
+		
+		# ~ ############## nonlinear terms load
+		
+		file_name5 = path + '/' + 'overline_tilde_full_AA_%s.npy'%(folder)
+		file_name6 = path + '/' + 'overline_tilde_full_AB_%s.npy'%(folder)
+		
+		################## reading files
+		######### fields
+		
+		r, theta, phi, Ur, Ut, Up, Br, Bt, Bp = load_numpy(file_name1)          #### velocity field
+		DT1, _, _,DT2, DT3, Tr				  = load_numpy_scalar(file_name2) 
+		
+		# ~ #### derivative loaded
+		
+		DV11, DV12, DV13, DV21, DV22, DV23, DV31, DV32, DV33 = load_numpy(file_name3) #### nonlinear terms
+		
+		DB11, DB12, DB13, DB21, DB22, DB23, DB31, DB32, DB33 = load_numpy(file_name4) #### nonlinear terms
+			
+		# ~ ########### nonlinear terms 
+		
+		_, _, _, UUr, UUt, UUp, BBr, BBt, BBp  = load_numpy(file_name5) #### nonlinear terms
+		_, _, _, UBr, UBt, UBp, BUr, BUt, BUp  = load_numpy(file_name6) #### nonlinear terms
+		
+		
+		################ fields
+		U = {'Ur':Ur, 'Ut': Ut, 'Up':Up}
+		B = {'Br':Br, 'Bt': Bt, 'Bp':Bp}
+		T = {'Tr':Tr}
+		
+		# ~ ############## derivatives
+		
+		DV = {'DV11':DV11, 'DV12':DV12, 'DV13':DV13, 'DV21':DV21, 'DV22':DV22, 'DV23':DV23, 'DV31':DV31, 'DV32':DV32, 'DV33':DV33}
+		
+		DB = {'DB11':DB11, 'DB12':DB12, 'DB13':DB13, 'DB21':DB21, 'DB22':DB22, 'DB23':DB23, 'DB31':DB31, 'DB32':DB32, 'DB33':DB33}
+		
+		DT = {'DT1':DT1, 'DT2':DT2, 'DT3':DT3}
+		
+		
+		############ nonlinear terms
+		
+		UU = {'UUr':UUr, 'UUt':UUt, 'UUp':UUp}
+		BB = {'BBr':BBr, 'BBt':BBt, 'BBp':BBp}
+		UB = {'UBr':UBr, 'UBt':UBt, 'UBp':UBp}
+		BU = {'BUr':BUr, 'BUt':BUt, 'BUp':BUp}
+		
+		# ~ #### velocity field
+		
+		fields = [U, B, T, DV, DB, DT, UU, BB, UB, BU]#, T]
+		
+		for i in range(0, n):
+			print (sample)
+			if sample<train:
+					path = data_path
+					dire = make_direcotry(path, 'train')
+					sample +=1
+
+			elif train<=sample<test + train:
+					path = data_path 
+					dire = make_direcotry(path, 'test')
+					sample +=1
+
+			else:
+				path = data_path 
+				dire = make_direcotry(path, 'val')
+				sample +=1
+
+			# ~ ## ~ name_file = sample
+			number_str = str(sample)
+
+			zero_filled_number = number_str.zfill(6)
+			
+			
+			for name in fields:
+				for keys, values in name.items():
+					comp = keys[-1]
+					variable = keys[:-1]
+			
+					filename = dire + '/' + variable + '_{0:}_{1:}'.format(comp, zero_filled_number) + '.h5'
+					field = values[26:50,36:60,i]
+					# ~ ## ~ print ("shape filed =\t", field.shape)
+					write_2D(filename, field)
+					
+	return 0
+
+
+##############
+
+if __name__ == '__main__':
+	data_path = '/nfs_scratch/sharmam/Nonlinear_term/results/3D_nathanael/data_100_iter/'
+	# ~ data_path = '../../result/test/'
+	data_generator_frame(data_path)
