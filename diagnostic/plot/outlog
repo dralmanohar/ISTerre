@@ -1,0 +1,7 @@
+['To_get_full_field_stack.py', '0_32', '32_64', 'outlog']
+['0_32', '32_64']
+path_sub = 	 ['f_bb', 'f_bu', 'f_ub', 'f_uu']
+path_sub = 	 ['f_bb', 'f_bu', 'f_ub', 'f_uu']
+data path = 	 ['0_32' '32_64']
+data field = 	 ['f_bb' 'f_bu' 'f_ub' 'f_uu']
+field comp = 	 ['p_comp' 'r_comp' 't_comp']
